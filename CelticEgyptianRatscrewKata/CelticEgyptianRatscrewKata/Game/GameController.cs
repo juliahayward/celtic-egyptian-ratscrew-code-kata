@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using CelticEgyptianRatscrewKata.GameSetup;
 using CelticEgyptianRatscrewKata.SnapRules;
+using NSubstitute.Exceptions;
+using NSubstitute.Routing.Handlers;
 
 namespace CelticEgyptianRatscrewKata.Game
 {
@@ -14,6 +16,7 @@ namespace CelticEgyptianRatscrewKata.Game
         private readonly IDealer _dealer;
         private readonly IShuffler _shuffler;
         private readonly IList<IPlayer> _players;
+        private IPlayer _currentPlayer;
         private readonly IGameState _gameState;
 
         public GameController(IGameState gameState, ISnapValidator snapValidator, IDealer dealer, IShuffler shuffler)
@@ -49,31 +52,75 @@ namespace CelticEgyptianRatscrewKata.Game
         {
             if (Players.Any(x => x.Name == player.Name)) return false;
 
+            // The first player to be added goes first;
+            if (_currentPlayer == null)
+                _currentPlayer = player;
+
             _players.Add(player);
             _gameState.AddPlayer(player.Name, Cards.Empty());
             return true;
         }
 
-        public Card PlayCard(IPlayer player)
+        public PlayOutcome PlayCard(IPlayer player)
         {
+            if (_currentPlayer != player)
+            {
+                player.IsPenalised = true;
+                return new PlayOutcome() {CardPlayed = null, Outcome = PlayCardOutcome.OutOfTurn};
+            }
+
+            _currentPlayer = NextPlayer(_currentPlayer);
+
             if (_gameState.HasCards(player.Name))
             {
-                return _gameState.PlayCard(player.Name);
+                var cardPlayed = _gameState.PlayCard(player.Name);
+                return new PlayOutcome() { CardPlayed = cardPlayed, Outcome = PlayCardOutcome.Valid };
             }
-            return null;
+
+            return new PlayOutcome() { CardPlayed = null, Outcome = PlayCardOutcome.HadNoCards };
         }
 
-        public bool AttemptSnap(IPlayer player)
+        public IPlayer NextPlayer(IPlayer player)
         {
-            AddPlayer(player);
+            var index = _players.IndexOf(player);
+            var nextIndex = (index == _players.Count - 1) ? 0 : index + 1;
+            return _players[nextIndex];
+        }
+
+
+        public SnapOutcome AttemptSnap(IPlayer player)
+        {
+            if (player.IsPenalised)
+                return SnapOutcome.IgnoredAsAlreadyPenalised;
 
             if (_snapValidator.CanSnap(_gameState.Stack))
             {
                 _gameState.WinStack(player.Name);
-                return true;
+                // After good snap, all players are back in the game!
+                ReinstateAllPlayers();
+
+                return SnapOutcome.Valid;
             }
-            return false;
+            else
+            {
+                // penalise the player for an invalid snap
+                player.IsPenalised = true;
+
+                // If everyone's penalised, forgive them all
+                if (_players.All(x => x.IsPenalised))
+                {
+                    ReinstateAllPlayers();
+                    return SnapOutcome.InvalidButEveryoneReinstated;
+                }
+                return SnapOutcome.Invalid;
+            }
         }
+
+        private void ReinstateAllPlayers()
+        {
+            foreach (var p in _players) p.IsPenalised = false;
+        }
+
 
         /// <summary>
         /// Starts a game with the currently added players

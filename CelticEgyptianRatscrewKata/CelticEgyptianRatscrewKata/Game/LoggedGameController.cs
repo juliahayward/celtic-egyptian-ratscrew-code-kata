@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace CelticEgyptianRatscrewKata.Game
 {
@@ -18,22 +19,53 @@ namespace CelticEgyptianRatscrewKata.Game
             return _gameController.AddPlayer(player);
         }
 
-        public Card PlayCard(IPlayer player)
+        public PlayOutcome PlayCard(IPlayer player)
         {
-            var playedCard = _gameController.PlayCard(player);
-            _log.Log(string.Format("{0} has played the {1}", player.Name, playedCard));
+            string snapLogMessage;
+            var outcome = _gameController.PlayCard(player);
+            switch (outcome.Outcome)
+            {
+                case PlayCardOutcome.Valid:
+                    snapLogMessage = string.Format("{0} has played the {1}", player.Name, outcome.CardPlayed);
+                    break;
+                case PlayCardOutcome.OutOfTurn:
+                    snapLogMessage = string.Format("{0} played out of turn - penalised", player.Name);
+                    break;
+                case PlayCardOutcome.HadNoCards:
+                    snapLogMessage = string.Format("{0} had no cards to play", player.Name);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            _log.Log(snapLogMessage);
             LogGameState();
-            return playedCard;
+            return outcome;
         }
 
-        public bool AttemptSnap(IPlayer player)
+        public SnapOutcome AttemptSnap(IPlayer player)
         {
-            var wasValidSnap = _gameController.AttemptSnap(player);
-
-            var snapLogMessage = wasValidSnap ? "won the stack" : "did not win the stack";
-            _log.Log(string.Format("{0} {1}", player.Name, snapLogMessage));
+            string snapLogMessage;
+            var outcome = _gameController.AttemptSnap(player);
+            switch (outcome)
+            {
+                case SnapOutcome.Valid:
+                    snapLogMessage = string.Format("{0} won the stack", player.Name);
+                    break;
+                case SnapOutcome.Invalid:
+                    snapLogMessage = string.Format("{0} is penalised for a wrong snap", player.Name);
+                    break;
+                case SnapOutcome.IgnoredAsAlreadyPenalised:
+                    snapLogMessage = string.Format("{0} was already penalised", player.Name);
+                    break;
+                case SnapOutcome.InvalidButEveryoneReinstated:
+                    snapLogMessage = string.Format("Everyone penalised - so you're all back in the game");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            _log.Log(snapLogMessage);
             LogGameState();
-            return wasValidSnap;
+            return outcome;
         }
 
         public void StartGame(Cards deck)

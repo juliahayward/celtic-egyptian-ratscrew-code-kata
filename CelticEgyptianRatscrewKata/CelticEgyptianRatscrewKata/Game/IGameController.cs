@@ -5,8 +5,8 @@ namespace CelticEgyptianRatscrewKata.Game
     public interface IGameController
     {
         bool AddPlayer(IPlayer player);
-        Card PlayCard(IPlayer player);
-        bool AttemptSnap(IPlayer player);
+        PlayOutcome PlayCard(IPlayer player);
+        SnapOutcome AttemptSnap(IPlayer player);
 
         /// <summary>
         /// Starts a game with the currently added players

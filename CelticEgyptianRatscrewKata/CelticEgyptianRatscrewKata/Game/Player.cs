@@ -5,8 +5,11 @@ namespace CelticEgyptianRatscrewKata.Game
         public Player(string playerId)
         {
             Name = playerId;
+            IsPenalised = false;
         }
 
         public string Name { get; private set; }
+
+        public bool IsPenalised { get; set; }
     }
 }
