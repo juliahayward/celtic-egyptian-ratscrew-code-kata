@@ -54,6 +54,19 @@ namespace CelticEgyptianRatscrewKata.Game
         }
 
         /// <summary>
+        /// Play the top card of the given player's deck.
+        /// </summary>
+        public Card ForfeitCard(string playerId)
+        {
+            if (!_decks.ContainsKey(playerId)) throw new ArgumentException("The selected player doesn't exist");
+            if (!_decks[playerId].Any()) throw new ArgumentException("The selected player doesn't have any cards left");
+
+            var topCard = _decks[playerId].Pop();
+            _stack.AddToBottom(topCard);
+            return topCard;
+        }
+
+        /// <summary>
         /// Wins the stack for the given player.
         /// </summary>
         public void WinStack(string playerId)

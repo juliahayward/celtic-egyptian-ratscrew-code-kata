@@ -21,6 +21,11 @@ namespace CelticEgyptianRatscrewKata.Game
         Card PlayCard(string playerId);
 
         /// <summary>
+        /// Play the top card of the given player's deck to the bottom of the stack.
+        /// </summary>
+        Card ForfeitCard(string playerId);
+
+        /// <summary>
         /// Wins the stack for the given player.
         /// </summary>
         void WinStack(string playerId);

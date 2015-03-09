@@ -29,7 +29,7 @@ namespace CelticEgyptianRatscrewKata.Game
                     snapLogMessage = string.Format("{0} has played the {1}", player.Name, outcome.CardPlayed);
                     break;
                 case PlayCardOutcome.OutOfTurn:
-                    snapLogMessage = string.Format("{0} played out of turn - penalised", player.Name);
+                    snapLogMessage = string.Format("{0} played out of turn - penalised and {1} pushed to bottom of stack", player.Name, outcome.CardPlayed);
                     break;
                 case PlayCardOutcome.HadNoCards:
                     snapLogMessage = string.Format("{0} had no cards to play", player.Name);

@@ -66,7 +66,11 @@ namespace CelticEgyptianRatscrewKata.Game
             if (_currentPlayer != player)
             {
                 player.IsPenalised = true;
-                return new PlayOutcome() {CardPlayed = null, Outcome = PlayCardOutcome.OutOfTurn};
+                if (_gameState.HasCards(player.Name))
+                {
+                    var cardForfeited = _gameState.ForfeitCard(player.Name);
+                    return new PlayOutcome() { CardPlayed = cardForfeited, Outcome = PlayCardOutcome.OutOfTurn };
+                }
             }
 
             _currentPlayer = NextPlayer(_currentPlayer);
